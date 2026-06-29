@@ -1,4 +1,8 @@
+import { memo } from 'react';
 import { Highlight, themes } from 'prism-react-renderer';
+
+// Past this size, Prism tokenization blocks the main thread — fall back to plain.
+const HIGHLIGHT_LIMIT = 200_000;
 
 // Map our detector languages to Prism-supported languages
 const LANG_MAP: Record<string, string> = {
@@ -15,6 +19,8 @@ const LANG_MAP: Record<string, string> = {
   bash: 'bash',
   java: 'java',
   ruby: 'ruby',
+  go: 'go',
+  rust: 'rust',
   json: 'json',
   xml: 'markup',
   html: 'markup',
@@ -27,8 +33,19 @@ interface Props {
   wrap: boolean;
 }
 
-export function OutputPanel({ code, language, wrap }: Props) {
+function OutputPanelBase({ code, language, wrap }: Props) {
   const prismLang = LANG_MAP[language] ?? 'plaintext';
+
+  // Large output: skip Prism, render plain so the UI doesn't freeze.
+  if (code.length > HIGHLIGHT_LIMIT) {
+    return (
+      <div className="flex-1 overflow-auto bg-[#0d1117]">
+        <pre className={`font-code text-[13px] py-3 px-4 m-0 min-h-full leading-relaxed text-[#e6edf3] ${
+          wrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'
+        }`}>{code}</pre>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-auto bg-[#0d1117]">
@@ -56,3 +73,7 @@ export function OutputPanel({ code, language, wrap }: Props) {
     </div>
   );
 }
+
+// Props are primitives → shallow compare is correct; prevents Prism re-tokenizing
+// on every App re-render (every keystroke).
+export const OutputPanel = memo(OutputPanelBase);

@@ -11,10 +11,28 @@ export function Toolbar({ output, input }: Props) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
 
+  const writeClipboard = async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback for non-secure contexts / embedded webviews.
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch { return false; }
+    }
+  };
+
   const copy = async () => {
-    await navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    if (await writeClipboard(output)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
   };
 
   const exportTxt = () => {
@@ -29,9 +47,11 @@ export function Toolbar({ output, input }: Props) {
 
   const share = async () => {
     const url = getShareUrl(input);
-    await navigator.clipboard.writeText(url);
-    setShared(true);
-    setTimeout(() => setShared(false), 1500);
+    if (url.length > 8000) return; // too large for a usable link
+    if (await writeClipboard(url)) {
+      setShared(true);
+      setTimeout(() => setShared(false), 1500);
+    }
   };
 
   const base = "inline-flex items-center justify-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border transition-colors active:opacity-80";

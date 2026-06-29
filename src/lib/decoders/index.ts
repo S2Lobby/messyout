@@ -14,11 +14,15 @@ import { gzipDecoder } from './gzip';
 import { dataUriDecoder } from './data-uri';
 import { jwtDecoder } from './jwt';
 import { rot13Decoder } from './rot13';
+import { procNetDecoder } from './proc-net';
+import { powershellEncDecoder } from './powershell-enc';
 import type { Decoder } from './types';
 
 // Order matters: cleanup + most specific decoders first.
 export const decoders: Decoder[] = [
   ansiDecoder,        // strip terminal color codes before anything else
+  procNetDecoder,     // /proc/net/tcp hex IP:port:state → readable
+  powershellEncDecoder, // base64-of-UTF16LE → real command (before base64)
   jwtDecoder,
   dataUriDecoder,
   gzipDecoder,

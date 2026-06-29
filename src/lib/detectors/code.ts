@@ -22,15 +22,17 @@ const jsDetector: Detector = {
   },
 };
 
-// Python
+// Python — require two STRONG signals (the old `:$` / 4-space-indent heuristics
+// collided with YAML, nginx and indented logs).
 const pythonDetector: Detector = {
   detect(input): DetectResult | null {
     const signals = [
-      /^def\s+\w+\s*\(/m, /^import\s+\w+/m, /^from\s+\w+\s+import/m,
-      /^class\s+\w+/m, /\bprint\s*\(/, /:\s*$/, /^\s{4}\w/m, /\bself\b/,
+      /^def\s+\w+\s*\(/m, /^from\s+\w+\s+import/m, /^import\s+\w+/m,
+      /^class\s+\w+/m, /\bself\b/, /\b__\w+__\b/, /\bprint\s*\(/,
+      /\bif\s+__name__\s*==/,
     ].filter(r => r.test(input)).length;
     if (signals < 2) return null;
-    return { language: 'python', displayName: 'Python', confidence: Math.min(0.97, 0.45 + signals * 0.1) };
+    return { language: 'python', displayName: 'Python', confidence: Math.min(0.97, 0.45 + signals * 0.12) };
   },
 };
 
@@ -51,11 +53,13 @@ const sqlDetector: Detector = {
 const bashDetector: Detector = {
   detect(input): DetectResult | null {
     const signals = [
-      /^#!/m, /\becho\s+/, /\bexport\s+\w+=/, /\bif\s+\[/, /\bfi\b/,
-      /\bfor\s+\w+\s+in\b/, /\|\s*grep\b/, /\|\s*awk\b/, /\bsudo\s+/,
+      /^#!.*\b(sh|bash|zsh)\b/m, /\bexport\s+\w+=/, /\bif\s+\[\[?/, /\bfi\b/,
+      /\bfor\s+\w+\s+in\b/, /\|\s*(grep|awk|sed|cut|sort|uniq|xargs)\b/,
+      /\bsudo\s+/, /\$\([^)]+\)/, /2>&1|>\/dev\/null|&&|\|\|/, /<<\s*['"]?\w+/,
+      /\bcase\s+.*\bin\b/, /\bdone\b/,
     ].filter(r => r.test(input)).length;
     if (signals < 2) return null;
-    return { language: 'bash', displayName: 'Shell script', confidence: Math.min(0.95, 0.45 + signals * 0.1) };
+    return { language: 'bash', displayName: 'Shell script', confidence: Math.min(0.95, 0.4 + signals * 0.1) };
   },
 };
 

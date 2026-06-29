@@ -36,10 +36,11 @@ export default function App() {
     setMobileTab('output');
   };
 
-  const displayedCode = result
-    ? (selectedLayer !== null ? result.layers[selectedLayer].output : result.finalOutput)
-    : '';
-  const displayedLang = selectedLayer !== null ? 'plaintext' : (result?.format.language ?? 'plaintext');
+  // Guard the layer access: a new result may have fewer layers than the
+  // previously-selected index (the reset effect runs only after render).
+  const selLayer = selectedLayer !== null ? result?.layers[selectedLayer] : undefined;
+  const displayedCode = result ? (selLayer ? selLayer.output : result.finalOutput) : '';
+  const displayedLang = selLayer ? 'plaintext' : (result?.format.language ?? 'plaintext');
 
   const hasTabs = !!result && (
     result.layers.length > 0 || result.secrets.length > 0 || result.embedded.length > 0 ||
@@ -135,10 +136,15 @@ export default function App() {
       <Header />
 
       {/* Mobile tab switcher */}
-      <div className="md:hidden flex shrink-0 border-b border-[#30363d] bg-[#161b22]">
+      <div role="tablist" aria-label="View" className="md:hidden flex shrink-0 border-b border-[#30363d] bg-[#161b22]">
         {(['input', 'output'] as const).map(tab => (
           <button
             key={tab}
+            role="tab"
+            id={`mo-pane-tab-${tab}`}
+            aria-selected={mobileTab === tab}
+            aria-controls={`mo-pane-${tab}`}
+            tabIndex={mobileTab === tab ? 0 : -1}
             onClick={() => setMobileTab(tab)}
             className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs py-2 capitalize transition-colors border-b-2 ${
               mobileTab === tab
@@ -147,17 +153,32 @@ export default function App() {
             }`}
           >
             {tab}
-            {tab === 'output' && hasSecrets && <span className="w-1.5 h-1.5 rounded-full bg-[#f85149]" />}
+            {tab === 'output' && hasSecrets && (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f85149]" aria-hidden="true" />
+                <span className="sr-only">high-severity secrets found</span>
+              </>
+            )}
           </button>
         ))}
       </div>
 
       {/* Desktop split / mobile single-pane */}
       <div className="flex flex-1 min-h-0">
-        <div className={`${mobileTab === 'input' ? 'flex' : 'hidden'} md:flex flex-col md:w-[45%] w-full min-h-0 border-r border-[#30363d]`}>
+        <div
+          role="tabpanel"
+          id="mo-pane-input"
+          aria-labelledby="mo-pane-tab-input"
+          className={`${mobileTab === 'input' ? 'flex' : 'hidden'} md:flex flex-col md:w-[45%] w-full min-h-0 border-r border-[#30363d]`}
+        >
           <InputPanel value={input} onChange={setInput} />
         </div>
-        <div className={`${mobileTab === 'output' ? 'flex' : 'hidden'} md:flex flex-col md:flex-1 w-full min-h-0`}>
+        <div
+          role="tabpanel"
+          id="mo-pane-output"
+          aria-labelledby="mo-pane-tab-output"
+          className={`${mobileTab === 'output' ? 'flex' : 'hidden'} md:flex flex-col md:flex-1 w-full min-h-0`}
+        >
           {outputColumn}
         </div>
       </div>

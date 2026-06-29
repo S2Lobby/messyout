@@ -3,7 +3,7 @@ import type { DecodeResult } from '../types';
 
 const LANGUAGES = [
   'plaintext', 'json', 'xml', 'html', 'php', 'javascript', 'python',
-  'sql', 'bash', 'java', 'ruby', 'yaml', 'ini', 'nginx', 'apacheconf',
+  'sql', 'bash', 'java', 'ruby', 'go', 'rust', 'yaml', 'ini', 'nginx', 'apacheconf',
   'dockerfile', 'http',
 ];
 

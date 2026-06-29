@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Eraser } from 'lucide-react';
 
 interface Props {
@@ -7,12 +7,11 @@ interface Props {
 }
 
 export function InputPanel({ value, onChange }: Props) {
-  const ref = useRef<HTMLTextAreaElement>(null);
-
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (!file) return;
+    if (file.size > 5_000_000) { onChange(`[file too large: ${(file.size / 1e6).toFixed(1)} MB]`); return; }
     const reader = new FileReader();
     reader.onload = (ev) => onChange(ev.target?.result as string ?? '');
     reader.readAsText(file);
@@ -40,9 +39,9 @@ export function InputPanel({ value, onChange }: Props) {
         </div>
       </div>
       <textarea
-        ref={ref}
         value={value}
         onChange={e => onChange(e.target.value)}
+        aria-label="Messy input to decode"
         placeholder={"Paste messy output here…\n\nLFI / SSRF / XXE responses, base64, JWT,\nURL-encoded PHP, XML, nginx.conf — anything.\n\nOr drop a file."}
         className="font-code flex-1 w-full bg-transparent text-[#e6edf3] text-[13px] p-3 outline-none placeholder-[#6e7681] leading-relaxed"
         spellCheck={false}

@@ -1,12 +1,26 @@
 import type { Detector, DetectResult } from './types';
 
-// JSON
+// JSON (+ JSONL / NDJSON)
 const jsonDetector: Detector = {
   detect(input): DetectResult | null {
     const t = input.trim();
-    if (!((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']')))) return null;
-    try { JSON.parse(t); return { language: 'json', displayName: 'JSON', confidence: 0.99 }; }
-    catch { return null; }
+    if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+      try { JSON.parse(t); return { language: 'json', displayName: 'JSON', confidence: 0.99 }; }
+      catch { /* fall through to JSONL */ }
+    }
+    // JSON Lines / NDJSON: ≥2 lines that each parse as a JSON object (logs, jq -c).
+    const lines = t.split(/\r?\n/).filter(Boolean);
+    if (lines.length >= 2) {
+      const ok = lines.filter(l => {
+        const s = l.trim();
+        if (!s.startsWith('{')) return false;
+        try { JSON.parse(s); return true; } catch { return false; }
+      }).length;
+      if (ok >= 2 && ok / lines.length > 0.7) {
+        return { language: 'json', displayName: 'JSON Lines (NDJSON)', confidence: 0.95 };
+      }
+    }
+    return null;
   },
 };
 
@@ -179,16 +193,22 @@ const crontabDetector: Detector = {
     // `1234 5678 9012 3456 7890 cmd` (ps/netstat output) won't match.
     const F = String.raw`(?:\*(?:\/\d{1,2})?|\d{1,2}(?:[,\-\/]\d{1,2})*)`;
     const CRON_LINE = new RegExp(String.raw`^${F}\s+${F}\s+${F}\s+${F}\s+${F}\s+\S`, 'm');
+    // System crontab (/etc/crontab, /etc/cron.d): 5 fields + a USER + command.
+    const CRON6 = new RegExp(String.raw`^${F}\s+${F}\s+${F}\s+${F}\s+${F}\s+([a-z_][a-z0-9_-]*)\s+\S`, 'm');
     const MACRO = /^@(reboot|yearly|annually|monthly|weekly|daily|midnight|hourly)\s+\S/m;
     if (!MACRO.test(input) && !CRON_LINE.test(input)) return null;
+    const isSystem = CRON6.test(input);
     return {
       language: 'plaintext',
-      displayName: 'Crontab',
+      displayName: isSystem ? 'Crontab (system — has user field)' : 'Crontab',
       confidence: 0.95,
       explain: [
-        { pattern: CRON_LINE, label: 'Cron format', description: 'minute hour day-of-month month day-of-week command' },
+        { pattern: isSystem ? CRON6 : CRON_LINE, label: 'Cron format', description: isSystem
+            ? 'min hour dom month dow USER command — commands run AS that user (root cron = privesc target)'
+            : 'minute hour day-of-month month day-of-week command' },
         { pattern: /\*/, label: '*', description: 'Wildcard — every value' },
         { pattern: /\@reboot/, label: '@reboot', description: 'Run once at system startup — persistence mechanism' },
+        { pattern: /\broot\b/, label: 'root', description: 'Command runs as root — a writable script here is privesc' },
       ],
     };
   },

@@ -30,8 +30,12 @@ const HEX_BY_LEN: Record<number, HashInfo> = {
 };
 
 export function identifyHash(input: string): HashInfo | null {
-  const t = input.trim();
-  if (/\s/.test(t)) return null; // single token only
+  const whole = input.trim();
+  // Accept a single token OR a list of single-token lines (the cracking
+  // workflow: one hash per line) — identify by the first line in that case.
+  const first = whole.split(/\r?\n/)[0].trim();
+  const t = (/\s/.test(whole) && !/\s/.test(first)) ? first : whole;
+  if (/\s/.test(t)) return null;
 
   for (const { re, info } of PREFIXED) {
     if (re.test(t)) return info;

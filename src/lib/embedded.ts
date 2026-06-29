@@ -1,3 +1,5 @@
+import { b64ToUtf8 } from './b64';
+
 export interface EmbeddedToken {
   type: 'Base64' | 'Hex' | 'JWT';
   raw: string;
@@ -57,7 +59,7 @@ export function findEmbedded(text: string): EmbeddedToken[] {
     if (tok.length % 4 !== 0) continue;
     if (/^[a-zA-Z]+$/.test(tok)) continue; // plain word, not base64
     try {
-      const decoded = atob(tok);
+      const decoded = b64ToUtf8(tok);
       if (printableRatio(decoded) >= 0.9 && decoded.length >= 8) {
         add(tok, { type: 'Base64', raw: truncate(tok, 50), decoded: truncate(decoded) });
       }

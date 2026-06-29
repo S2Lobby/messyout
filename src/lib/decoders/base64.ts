@@ -1,4 +1,5 @@
 import type { Decoder } from './types';
+import { b64ToUtf8 } from '../b64';
 
 const B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
@@ -35,6 +36,6 @@ export const base64Decoder: Decoder = {
     } catch { return 0; }
   },
   decode(input) {
-    return atob(input.trim().replace(/\s/g, ''));
+    return b64ToUtf8(input.trim().replace(/\s/g, ''));
   },
 };

@@ -2,9 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- %BASE_URL% so the icon resolves under the /messyout/ project-page base, not the domain root -->
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Paste messy, multi-layered encoded output (base64, URL, HTML entities, JWT, gzip) and get clean, syntax-highlighted results. 100% client-side — nothing leaves your browser. Built for CTF, pentest, SOC, DFIR, and DevOps." />
+    <meta name="theme-color" content="#010409" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MessyOut — paste the mess, get clean output" />
+    <meta property="og:description" content="Auto-decode base64, URL, JWT, gzip, hex and more — then prettify, highlight, and identify it. 100% client-side, nothing leaves your browser." />
+    <meta property="og:url" content="https://S2Lobby.github.io/messyout/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MessyOut — paste the mess, get clean output" />
+    <meta name="twitter:description" content="Auto-decode messy, multi-layered output, fully in your browser." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
